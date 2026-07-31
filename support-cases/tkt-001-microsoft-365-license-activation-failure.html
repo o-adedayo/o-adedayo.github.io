@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TKT-XXX — M365 "Unlicensed Product" Errors Persisting After Reinstall — Adedayo</title>
+<meta name="description" content="Sanitized IT support troubleshooting write-up." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#0c1118; --panel:#121a25; --panel-2:#0f1620; --line:#22303f;
+    --text:#e8eef5; --muted:#90a2b6; --amber:#e9a23b; --amber-dim:rgba(233,162,59,.12);
+    --steel:#5b7a9d; --ok:#4caf7d; --crit:#e5484d;
+    --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',system-ui,sans-serif; --serif:'Spectral',Georgia,serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--ink);color:var(--text);font-family:var(--sans);line-height:1.7;font-size:16px}
+  a{color:var(--amber);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:760px;margin:0 auto;padding:0 24px}
+  header.top{border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(12,17,24,.92);backdrop-filter:blur(8px)}
+  .top-inner{display:flex;align-items:center;justify-content:space-between;height:56px}
+  .top-id{font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.06em}
+  .back{font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;color:var(--muted)}
+  .back:hover{color:var(--amber)}
+
+  .banner{
+    font-family:var(--mono);font-size:12.5px;color:var(--muted);
+    background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--amber);
+    border-radius:4px;padding:12px 16px;margin:36px 0 28px;
+  }
+  .banner b{color:var(--amber)}
+
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(26px,4vw,36px);line-height:1.25;margin-top:8px}
+
+  table.meta{width:100%;border-collapse:collapse;margin:26px 0;font-size:14px}
+  table.meta td{border:1px solid var(--line);padding:8px 12px}
+  table.meta td:first-child{color:var(--steel);font-family:var(--mono);font-size:12.5px;width:38%;background:var(--panel-2)}
+
+  h2{font-family:var(--sans);font-weight:600;font-size:19px;margin:40px 0 12px;padding-top:16px;border-top:1px solid var(--line)}
+  h2:first-of-type{border-top:none;padding-top:0}
+  p{color:var(--text);margin-bottom:4px}
+  p.hint{color:var(--muted);font-style:italic;font-size:14.5px}
+
+  ol,ul{margin:10px 0 0 20px;color:var(--text)}
+  li{margin-bottom:6px}
+
+  table.steps{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+  table.steps th{
+    font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--steel);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);
+  }
+  table.steps td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--text)}
+  code{font-family:var(--mono);font-size:.92em;background:var(--panel-2);border:1px solid var(--line);border-radius:3px;padding:1px 6px;color:#c7d3e0}
+
+  .tags{margin-top:8px}
+  .tag{
+    display:inline-block;font-family:var(--mono);font-size:12px;color:var(--amber);
+    background:var(--amber-dim);border-radius:3px;padding:3px 9px;margin:4px 6px 0 0;
+  }
+
+  .note{
+    margin-top:40px;background:var(--panel);border:1px solid var(--line);border-radius:6px;
+    padding:18px 20px;font-size:14.5px;color:var(--muted);
+  }
+  .note b{color:var(--text)}
+
+  footer{padding:48px 0 44px;font-family:var(--mono);font-size:12px;color:var(--steel)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="top-id"><b>ADEDAYO</b> · SUPPORT WRITE-UP</div>
+    <a class="back" href="index.html">← ALL WRITE-UPS</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="banner">
+    <b>Sanitization notice:</b> Based on a real support case. User names, hostnames, and
+    organization-identifying details have been removed or generalized.
+  </div>
+
+  <h1>TKT-XXX — Microsoft 365 "Unlicensed Product" Errors Persisting After Reinstall</h1>
+
+  <table class="meta">
+    <tr><td>Ticket ID</td><td>TKT-XXX</td></tr>
+    <tr><td>Category</td><td>Endpoint / Identity</td></tr>
+    <tr><td>Priority</td><td>P3</td></tr>
+    <tr><td>Environment</td><td>Windows, Microsoft 365 Business Premium, Entra ID-managed tenant</td></tr>
+    <tr><td>Time to resolve</td><td>Multi-session (initial triage, reinstall attempt, follow-up remediation)</td></tr>
+    <tr><td>Outcome</td><td>Resolved</td></tr>
+  </table>
+
+  <h2>1. Reported Symptom</h2>
+  <p class="hint">What the user actually said, in one or two lines — user language, not technical language. Then translate: what did that report actually suggest?</p>
+  <p>"Word and Outlook say I'm not licensed and most of my features are greyed out."</p>
+  <p>Translated: the user was seeing full-screen "Sign in to get started with Outlook" activation prompts, an "Outlook (Unlicensed Product)" title bar, and Word banners reading "stored credentials are out of date" and "most features are disabled because your Office product is inactive." This pattern points to a license <em>validation</em> failure on the client, not necessarily a missing license — two different problems that look identical to the end user.</p>
+
+  <h2>2. Initial Hypotheses</h2>
+  <p class="hint">What could plausibly cause this? List 2–4 candidates in the order you considered them.</p>
+  <ol>
+    <li>The user's M365 license was never assigned or had lapsed (tenant-side).</li>
+    <li>The license was assigned but failed to provision correctly against one or more services (partial provisioning error).</li>
+    <li>The license was fine, but the local Office installation was corrupted or never activated on this device (client-side).</li>
+    <li>The license was fine, but stale cached credentials/tokens on the endpoint were blocking Office from validating it, even after a clean reinstall.</li>
+  </ol>
+
+  <h2>3. Diagnostic Path</h2>
+  <p class="hint">Step by step: what you checked, what you found, what it ruled in or out.</p>
+  <table class="steps">
+    <tr><th>Step</th><th>Check</th><th>Tool / Command</th><th>Result</th><th>Ruled out / Confirmed</th></tr>
+    <tr>
+      <td>1</td>
+      <td>Confirmed license assignment</td>
+      <td><code>M365 Admin Center → Active Users → Licenses</code></td>
+      <td>Microsoft 365 Business Premium and Entra ID P2 both shown as assigned</td>
+      <td>Ruled out: missing license</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>Confirmed per-service provisioning state</td>
+      <td><code>Entra ID admin center → user → Licenses blade</code></td>
+      <td>Business Premium 53/53 services enabled; Entra ID P2 4/4 enabled; both Direct assignment, State: Active</td>
+      <td>Ruled out: partial/failed provisioning</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>Attempted full reinstall of Office</td>
+      <td><code>Uninstall / reinstall Microsoft 365 Apps</code></td>
+      <td>Unlicensed banners reappeared after sign-in</td>
+      <td>Ruled out: corrupted installation</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>Reviewed what a reinstall actually clears</td>
+      <td>Manual review of Office uninstall behavior</td>
+      <td>Confirmed reinstall does not clear Windows Credential Manager entries or Office's local token cache folder</td>
+      <td>Confirmed: stale cached credentials as likely cause</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>Cleared Windows Credential Manager entries</td>
+      <td><code>Control Panel → Credential Manager → Windows Credentials</code></td>
+      <td>Removed stale Microsoft/Office-related entries</td>
+      <td>Remediation step</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>Signed out of Windows-level Microsoft account</td>
+      <td><code>Settings → Accounts → Email & accounts</code></td>
+      <td>Removed cached identity session outside of Office itself</td>
+      <td>Remediation step</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>Cleared Office's local token cache folder</td>
+      <td>Local token cache folder (OneDrive/SSO device-token entries included)</td>
+      <td>Cleared cached identity/session tokens</td>
+      <td>Remediation step</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>Rebooted and re-authenticated</td>
+      <td><code>Reboot → sign in to Word with user's UPN</code></td>
+      <td>License activated successfully; features restored</td>
+      <td>Confirmed fix</td>
+    </tr>
+  </table>
+
+  <h2>4. Root Cause</h2>
+  <p>The license itself was fully active and correctly provisioned at the tenant level — this was verified directly in Entra ID before any client-side changes were made, which kept the investigation from wasting time on the wrong layer. The actual problem was stale cached Microsoft identity/session data on the endpoint (Windows Credential Manager entries, a linked Windows-level Microsoft account session, and Office's local token cache) that was preventing Office from successfully validating the license against the current session. A standard Office uninstall/reinstall does not touch any of these locations, which is why the first remediation attempt didn't resolve it — the corrupted-install hypothesis looked right until the reinstall failed to fix it, at which point the cache hypothesis became the stronger explanation.</p>
+
+  <h2>5. Fix Applied</h2>
+  <p>Cleared the stale Windows Credential Manager entries, signed out of the Windows-level Microsoft account linked to the device, and cleared Office's local token cache folder. Rebooted the endpoint and signed back into Word with the user's correct M365 credentials. Verified resolution by confirming the unlicensed/inactive banners no longer appeared and that full Office editing functionality (not just the absence of complaints) was restored and remained stable after reopening the applications.</p>
+
+  <h2>6. Prevention / Follow-Up</h2>
+  <p>Documented internally that "Unlicensed Product" symptoms surviving a clean Office reinstall should prompt clearing Windows Credential Manager entries, the linked Windows-level Microsoft account, and Office's local token cache as a standard next step — rather than repeating the reinstall or escalating prematurely. This sequencing (verify tenant-side license health first, then work through client-side identity cache layers) is being carried forward as the default triage order for similar activation tickets going forward.</p>
+
+  <h2>Skills Demonstrated</h2>
+  <p class="hint">Tag the specific, checkable skills this ticket proves. Specificity beats a long generic list.</p>
+  <div class="tags">
+    <span class="tag">Microsoft Entra ID</span>
+    <span class="tag">M365 Admin Center</span>
+    <span class="tag">License/service-plan auditing</span>
+    <span class="tag">Windows Credential Manager</span>
+    <span class="tag">Layered elimination (tenant vs. client isolation)</span>
+    <span class="tag">Root cause re-diagnosis after failed first fix</span>
+  </div>
+
+  <div class="note">
+    <b>Security note (if applicable):</b> No security dimension identified. Verified early in triage that this was a license validation/identity cache issue rather than an account compromise indicator — no unusual sign-in activity, no unauthorized license or permission changes, and no account security posture changes were made or required.
+  </div>
+
+</div>
+
+<footer class="wrap">
+  Author: Adedayo · <a href="https://o-adedayo.github.io">Portfolio</a> · <a href="https://github.com/o-adedayo">GitHub</a>
+</footer>
+</body>
+</html>
