@@ -97,12 +97,10 @@
   </table>
 
   <h2>1. Reported Symptom</h2>
-  <p class="hint">What the user actually said, in one or two lines — user language, not technical language. Then translate: what did that report actually suggest?</p>
   <p>"Word and Outlook say I'm not licensed and most of my features are greyed out."</p>
   <p>Translated: the user was seeing full-screen "Sign in to get started with Outlook" activation prompts, an "Outlook (Unlicensed Product)" title bar, and Word banners reading "stored credentials are out of date" and "most features are disabled because your Office product is inactive." This pattern points to a license <em>validation</em> failure on the client, not necessarily a missing license — two different problems that look identical to the end user.</p>
 
   <h2>2. Initial Hypotheses</h2>
-  <p class="hint">What could plausibly cause this? List 2–4 candidates in the order you considered them.</p>
   <ol>
     <li>The user's M365 license was never assigned or had lapsed (tenant-side).</li>
     <li>The license was assigned but failed to provision correctly against one or more services (partial provisioning error).</li>
@@ -111,7 +109,6 @@
   </ol>
 
   <h2>3. Diagnostic Path</h2>
-  <p class="hint">Step by step: what you checked, what you found, what it ruled in or out.</p>
   <table class="steps">
     <tr><th>Step</th><th>Check</th><th>Tool / Command</th><th>Result</th><th>Ruled out / Confirmed</th></tr>
     <tr>
@@ -182,7 +179,6 @@
   <p>Documented internally that "Unlicensed Product" symptoms surviving a clean Office reinstall should prompt clearing Windows Credential Manager entries, the linked Windows-level Microsoft account, and Office's local token cache as a standard next step — rather than repeating the reinstall or escalating prematurely. This sequencing (verify tenant-side license health first, then work through client-side identity cache layers) is being carried forward as the default triage order for similar activation tickets going forward.</p>
 
   <h2>Skills Demonstrated</h2>
-  <p class="hint">Tag the specific, checkable skills this ticket proves. Specificity beats a long generic list.</p>
   <div class="tags">
     <span class="tag">Microsoft Entra ID</span>
     <span class="tag">M365 Admin Center</span>
