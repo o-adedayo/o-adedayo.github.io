@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IT Support Write-Ups — Adedayo</title>
+<meta name="description" content="Sanitized IT Help Desk troubleshooting write-ups." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#0c1118; --panel:#121a25; --panel-2:#0f1620; --line:#22303f;
+    --text:#e8eef5; --muted:#90a2b6; --amber:#e9a23b; --amber-dim:rgba(233,162,59,.12);
+    --steel:#5b7a9d; --ok:#4caf7d;
+    --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',system-ui,sans-serif; --serif:'Spectral',Georgia,serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--ink);color:var(--text);font-family:var(--sans);line-height:1.65}
+  a{color:var(--amber);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:900px;margin:0 auto;padding:0 24px}
+  header.top{border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(12,17,24,.92);backdrop-filter:blur(8px)}
+  .top-inner{display:flex;align-items:center;justify-content:space-between;height:56px}
+  .top-id{font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.06em}
+  .back{font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;color:var(--muted)}
+  .back:hover{color:var(--amber)}
+  .intro{padding:56px 0 8px}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);margin-bottom:12px}
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(28px,4vw,40px)}
+  .lede{color:var(--muted);max-width:60ch;margin-top:14px;font-size:16px}
+  .list{padding:36px 0 80px;display:flex;flex-direction:column;gap:16px}
+  .entry{
+    background:var(--panel);border:1px solid var(--line);border-radius:6px;
+    padding:20px 22px;display:flex;justify-content:space-between;align-items:center;gap:16px;
+    transition:border-color .2s ease, transform .2s ease;
+  }
+  .entry:hover{border-color:var(--steel);transform:translateY(-2px)}
+  .entry a{color:var(--text);font-weight:600;font-size:16px}
+  .entry a:hover{color:var(--amber);text-decoration:none}
+  .meta{font-family:var(--mono);font-size:12px;color:var(--steel);margin-top:4px}
+  .chip{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;border:1px solid rgba(76,175,125,.45);color:var(--ok);background:rgba(76,175,125,.08);border-radius:3px;padding:2px 8px;white-space:nowrap}
+  .empty{
+    border:1px dashed var(--line);border-radius:6px;padding:32px;text-align:center;color:var(--muted);
+    font-family:var(--mono);font-size:13.5px;
+  }
+  footer{padding:0 0 44px;font-family:var(--mono);font-size:12px;color:var(--steel)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="top-id"><b>ADEDAYO</b> · SUPPORT WRITE-UPS</div>
+    <a class="back" href="../index.html">← BACK TO PORTFOLIO</a>
+  </div>
+</header>
+
+<div class="wrap intro">
+  <div class="eyebrow">IT Support &amp; Troubleshooting</div>
+  <h1>Selected write-ups</h1>
+  <p class="lede">
+    Sanitized troubleshooting cases from IT Help Desk work — symptom, diagnostic path,
+    root cause, and fix. Structured the way I actually work through a ticket.
+  </p>
+</div>
+
+<div class="wrap list">
+
+  <!--
+    HOW TO ADD A NEW ENTRY
+    1. Copy support-cases/template.html to a new file, e.g. tkt-001-vpn-drops.html
+    2. Fill in the content of that page.
+    3. Add a matching <div class="entry"> block below, linking to the new file.
+    Remove the .empty placeholder below once you have at least one real entry.
+  -->
+
+  <div class="empty">
+    No write-ups published yet — check back soon.
+  </div>
+
+  <!-- EXAMPLE ENTRY (uncomment and edit once you add a real write-up)
+  <div class="entry">
+    <div>
+      <a href="tkt-001-vpn-drops.html">TKT-001 — Intermittent VPN Drops on Managed Laptops</a>
+      <div class="meta">Network · Resolved · 45 min</div>
+    </div>
+    <span class="chip">Resolved</span>
+  </div>
+  -->
+
+</div>
+
+<footer class="wrap">
+  ADEDAYO · IT SUPPORT WRITE-UPS · ALL CASES SANITIZED
+</footer>
+</body>
+</html>
