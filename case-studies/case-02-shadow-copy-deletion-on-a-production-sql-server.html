@@ -161,7 +161,7 @@
   <p class="hint">Relative timestamps (T+0) to avoid dating the incident.</p>
   <table class="timeline">
     <tr><th>Time</th><th>Event</th></tr>
-    <tr><td>T+0m</td><td><code>vssadmin.exe delete shadows /all /quiet</code> executed on the production SQL server (SQL-01, 192.0.2.33) under a client IT administrator account, from an interactive PowerShell session</td></tr>
+    <tr><td>T+0m</td><td><code>vssadmin.exe delete shadows /all /quiet</code> executed on the production SQL server (SQL-01) under a client IT administrator account, from an interactive PowerShell session</td></tr>
     <tr><td>T+2m</td><td>Datto EDR "Shadow Copy Deletion" rule fires (T1490, High); managed SOC incident auto-created</td></tr>
     <tr><td>T+~10m</td><td>Managed SOC escalates by phone; alert details reviewed together; deconfliction ownership assigned to MSP</td></tr>
     <tr><td>T+~30m</td><td>Telemetry triage complete; working hypothesis formed (probable authorized maintenance, compromise not excluded); containment staged but held</td></tr>
@@ -170,20 +170,6 @@
     <tr><td>T+~2h</td><td>SOC notified of benign disposition; escalation loop closed; alert resolved with full documentation</td></tr>
     <tr><td>T+1d</td><td>Suppression removed after maintenance window; shadow copy regeneration and backup remediation verified</td></tr>
   </table>
-
-  <h2>Appendix A — Sanitization Checklist</h2>
-  <p class="hint">Confirmed before publishing.</p>
-  <ul class="checklist">
-    <li>Organization name, industry-identifying details, and internal team names removed</li>
-    <li>Hostnames and internal naming conventions generalized (SQL-01)</li>
-    <li>Usernames/emails replaced with role labels (client IT administrator)</li>
-    <li>Real IPs replaced with RFC 5737 ranges (192.0.2.33)</li>
-    <li>Real file hashes removed (only the stock Microsoft-signed system binary was involved)</li>
-    <li>Proprietary detection content paraphrased, not pasted</li>
-    <li>Absolute dates replaced with relative timestamps</li>
-    <li>No screenshots included in this case study</li>
-    <li>Reviewed against employer confidentiality/NDA obligations</li>
-  </ul>
 
 </div>
 
