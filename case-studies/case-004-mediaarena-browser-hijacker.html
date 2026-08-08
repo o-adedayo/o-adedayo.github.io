@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CASE-004 — MediaArena Browser Hijacker: Verifying a "Blocked" Detection That Actually Executed — Adedayo</title>
+<meta name="description" content="Sanitized incident response case study." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#0c1118; --panel:#121a25; --panel-2:#0f1620; --line:#22303f;
+    --text:#e8eef5; --muted:#90a2b6; --amber:#e9a23b; --amber-dim:rgba(233,162,59,.12);
+    --steel:#5b7a9d; --ok:#4caf7d; --crit:#e5484d;
+    --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',system-ui,sans-serif; --serif:'Spectral',Georgia,serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--ink);color:var(--text);font-family:var(--sans);line-height:1.7;font-size:16px}
+  a{color:var(--amber);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:780px;margin:0 auto;padding:0 24px}
+  header.top{border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(12,17,24,.92);backdrop-filter:blur(8px)}
+  .top-inner{display:flex;align-items:center;justify-content:space-between;height:56px}
+  .top-id{font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.06em}
+  .back{font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;color:var(--muted)}
+  .back:hover{color:var(--amber)}
+
+  .banner{
+    font-family:var(--mono);font-size:12.5px;color:var(--muted);
+    background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--amber);
+    border-radius:4px;padding:12px 16px;margin:36px 0 28px;
+  }
+  .banner b{color:var(--amber)}
+
+  .chip{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-radius:3px;padding:2px 9px}
+  .chip.crit{color:var(--crit);border:1px solid rgba(229,72,77,.45);background:rgba(229,72,77,.08)}
+  .chip.mod{color:var(--amber);border:1px solid rgba(233,162,59,.45);background:var(--amber-dim)}
+
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(26px,4vw,36px);line-height:1.25;margin-top:14px}
+
+  table.meta{width:100%;border-collapse:collapse;margin:26px 0;font-size:14px}
+  table.meta td{border:1px solid var(--line);padding:8px 12px}
+  table.meta td:first-child{color:var(--steel);font-family:var(--mono);font-size:12.5px;width:38%;background:var(--panel-2)}
+
+  h2{font-family:var(--sans);font-weight:600;font-size:19px;margin:40px 0 12px;padding-top:16px;border-top:1px solid var(--line)}
+  h2:first-of-type{border-top:none;padding-top:0}
+  p{color:var(--text);margin-bottom:4px}
+  p.hint{color:var(--muted);font-style:italic;font-size:14.5px}
+
+  ul,ol{margin:10px 0 0 20px;color:var(--text)}
+  li{margin-bottom:6px}
+
+  table.findings, table.timeline, table.attck{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+  table.findings th, table.timeline th, table.attck th{
+    font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--steel);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);
+  }
+  table.findings td, table.timeline td, table.attck td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--text)}
+  code{font-family:var(--mono);font-size:.92em;background:var(--panel-2);border:1px solid var(--line);border-radius:3px;padding:1px 6px;color:#c7d3e0}
+
+  .ttp{display:inline-block;font-family:var(--mono);font-size:12px;color:var(--amber);background:var(--amber-dim);border-radius:3px;padding:3px 9px;margin:4px 6px 0 0}
+
+  .checklist{margin-top:14px;list-style:none;margin-left:0}
+  .checklist li{
+    font-family:var(--mono);font-size:13px;color:var(--muted);padding:6px 0 6px 26px;position:relative;border-bottom:1px solid var(--line);
+  }
+  .checklist li::before{content:"☐";position:absolute;left:0;color:var(--steel)}
+
+  figure{margin:18px 0 6px;background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:10px}
+  figure img{width:100%;display:block;border-radius:2px}
+  figcaption{font-family:var(--mono);font-size:12px;color:var(--muted);padding:8px 4px 0;line-height:1.5}
+
+  footer{padding:48px 0 44px;font-family:var(--mono);font-size:12px;color:var(--steel)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="top-id"><b>ADEDAYO</b> · IR CASE STUDY</div>
+    <a class="back" href="index.html">← ALL CASE STUDIES</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="banner">
+    <b>Sanitization notice:</b> This report is based on a real incident I handled.
+    Organization names, hostnames, usernames, IP addresses, and any identifying indicators
+    have been removed or generalized. The analysis, decisions, and timeline are unaltered.
+  </div>
+
+  <span class="chip mod">SEV-3</span>
+  <h1>CASE-004 — MediaArena Browser Hijacker: Verifying a "Blocked" Detection That Actually Executed</h1>
+
+  <table class="meta">
+    <tr><td>Case ID</td><td>CASE-004</td></tr>
+    <tr><td>Severity</td><td>SEV-3 (moderate) — alert platform rated "High"; downgraded after scoping confirmed a contained single-endpoint PUA with no persistence or credential-theft capability</td></tr>
+    <tr><td>Status</td><td>Closed — remediated and forensically verified</td></tr>
+    <tr><td>Incident type</td><td>Malware — browser-hijacking PUA (BrowserModifier:Win32/MediaArena) via bundled "free utility" installer</td></tr>
+    <tr><td>Detection source</td><td>EDR alert — Microsoft Defender real-time protection, surfaced through managed SOC platform</td></tr>
+    <tr><td>Dwell time</td><td>~23 seconds (execution to quarantine)</td></tr>
+    <tr><td>Time to contain</td><td>Automated containment at T+23s; independent verification and persistence hunt completed same shift</td></tr>
+    <tr><td>ATT&amp;CK techniques</td><td>T1204.002, T1036, T1112 (attempted); hunted: T1547.001, T1547.009, T1053.005, T1543.003, T1546.003</td></tr>
+    <tr><td>Role in response</td><td>Lead responder — triage through verified closure, plus remediation tooling development</td></tr>
+  </table>
+
+  <h2>1. Executive Summary</h2>
+  <p>An employee at a managed client downloaded a free "recipe and nutrition" application from an untrusted website. The installer bundled a browser hijacker designed to silently change the computer's default browser and search engine to redirect searches through advertising services. Antivirus caught and removed the program within about 23 seconds of it starting. My investigation confirmed the hijacker accomplished nothing in that window — browser settings were untouched, no mechanism to restart itself was created, and no other computers were affected. Notably, the monitoring platform's alert described the threat as "blocked," but endpoint telemetry showed it had briefly run; establishing that distinction changed the scope of verification required before the incident could be responsibly closed.</p>
+
+  <h2>2. Detection</h2>
+  <ul>
+    <li>Managed SOC platform raised a high-severity incident for <code>BrowserModifier:Win32/MediaArena</code> detected by Defender real-time protection on a client workstation (generalized here as <code>WKSTN-01</code>), with three consolidated detection events inside one minute.</li>
+    <li>The alert identified a signature-based ("known bad") detection of an executable in the user's roaming profile — a path pattern typical of bundled PUA installers — and reported execution status as "Blocked."</li>
+    <li>Escalation was warranted because the alert consolidated repeat detections (suggesting re-execution attempts or persistence) and because the platform's own remediation guidance assumed a full-compromise scenario that needed to be confirmed or ruled out with endpoint evidence.</li>
+  </ul>
+  <p style="margin-top:12px"><b>Telemetry involved:</b> Microsoft Defender threat records (<code>Get-MpThreatDetection</code>, <code>Get-MpThreat</code>), Windows registry (HKU hive analysis), NTFS creation timestamps, scheduled task and service inventories, WMI subscription namespace.</p>
+
+  <h2>3. Triage &amp; Scoping</h2>
+  <p>I began by validating the alert against Defender's own records rather than taking the platform's summary at face value. The detection showed a successful remediation (<code>ActionSuccess: True</code>, threat quarantined 23 seconds after initial detection) with <code>explorer.exe</code> as the initiating process — consistent with a user double-clicking a downloaded installer, and inconsistent with remote exploitation, script chains, or lateral movement. Defender's flagged resources revealed the malware had written an uninstall registry key in the user's hive before termination, registering itself as an installed application.</p>
+
+  <p style="margin-top:10px">The pivotal finding came from <code>Get-MpThreat</code>: <code>DidThreatExecute: True</code>. The SOC alert had characterized the threat as blocked pre-execution; the endpoint's ground truth showed it ran briefly before being killed. That distinction converted several "optional" verification steps into mandatory ones — a browser hijacker with even seconds of execution time must be assumed to have attempted its primary objective. I re-scoped the investigation to verify, with evidence, everything the malware could have done in its execution window.</p>
+
+  <figure>
+    <img src="assets/case-mediaarena/01_defender_detection.png" alt="Get-MpThreatDetection output showing successful remediation, explorer.exe process lineage, and flagged file and registry resources, with identifiers redacted" />
+    <figcaption>Fig. 1 — Get-MpThreatDetection: remediation success, explorer.exe lineage, and the flagged file + registry resources (identifiers redacted).</figcaption>
+  </figure>
+  <figure>
+    <img src="assets/case-mediaarena/05_get_mpthreat.png" alt="Get-MpThreat output showing DidThreatExecute True and IsActive False" />
+    <figcaption>Fig. 2 — Get-MpThreat: <b>DidThreatExecute: True</b> with IsActive: False — the evidence that corrected the alert's "Blocked" characterization.</figcaption>
+  </figure>
+
+  <table class="findings">
+    <tr><th>#</th><th>Finding</th><th>Evidence source</th></tr>
+    <tr><td>1</td><td>Threat executed (~23s), then terminated and quarantined; not blocked pre-execution as alerted</td><td>Get-MpThreat (DidThreatExecute: True; IsActive: False)</td></tr>
+    <tr><td>2</td><td>User-initiated execution via downloaded installer; no remote or script-based delivery chain</td><td>Get-MpThreatDetection process lineage (explorer.exe)</td></tr>
+    <tr><td>3</td><td>Malware self-registered an HKCU uninstall key prior to termination — its only completed action</td><td>Defender flagged resources; registry verification</td></tr>
+    <tr><td>4</td><td>Uninstall key removal confirmed, with the user hive verified loaded so the negative result was conclusive</td><td>HKU registry query + hive-presence check</td></tr>
+    <tr><td>5</td><td>Zero persistence artifacts across six autostart surfaces</td><td>Automated sweep: Run/RunOnce, Winlogon, tasks, startup folders, services, WMI subscriptions</td></tr>
+    <tr><td>6</td><td>Browser hijack never occurred — default http/https handlers unmodified</td><td>URL association ProgId inspection in user hive</td></tr>
+    <tr><td>7</td><td>No files created outside the payload directory during the execution window; no system-wide artifacts</td><td>NTFS creation-time analysis across user profile, Program Files, ProgramData</td></tr>
+  </table>
+
+  <figure>
+    <img src="assets/case-mediaarena/02_registry_verification.png" alt="PowerShell verification that the malware's uninstall registry key was removed, SID redacted" />
+    <figcaption>Fig. 3 — Independent verification that Defender removed the malware's uninstall registry key (SID redacted).</figcaption>
+  </figure>
+  <figure>
+    <img src="assets/case-mediaarena/03_hive_confirmation.png" alt="Test-Path confirming the user registry hive was loaded" />
+    <figcaption>Fig. 4 — Hive-load confirmation: proving the negative result in Fig. 3 was conclusive rather than an artifact of an unmounted hive.</figcaption>
+  </figure>
+  <figure>
+    <img src="assets/case-mediaarena/04_persistence_sweep_clean.png" alt="Persistence sweep summary output showing zero suspect items found" />
+    <figcaption>Fig. 5 — Persistence sweep summary: zero suspect items across all six autostart surfaces.</figcaption>
+  </figure>
+
+  <h2>4. Containment</h2>
+  <p>Primary containment was automated — Defender terminated and quarantined the payload at T+23s. My containment decisions were therefore about proportionality: the SOC platform's boilerplate guidance prescribed environment-wide firewall lockdown and organization-wide password resets, which the evidence did not support for a contained, single-endpoint PUA with no credential-theft capability. I kept the affected user off the endpoint during verification, declined the environment-wide measures, and scoped credential action to a single precautionary reset of the affected domain account. Right-sizing here avoided significant client disruption while the persistence hunt and impact forensics established there was nothing further to contain.</p>
+
+  <h2>5. Remediation &amp; Recovery</h2>
+  <ul>
+    <li><b>Eradication:</b> payload directory removed with SHA-256 hashes of all binaries captured beforehand for the evidence record; Defender-reported registry cleanup independently verified rather than assumed.</li>
+    <li><b>Persistence hunt (negative result verified):</b> automated sweep of Run/RunOnce keys across HKLM and all user hives, Winlogon Shell/Userinit values, scheduled tasks (including any executing from user AppData), startup folders with <code>.lnk</code> target resolution, services, and WMI event subscriptions — all clean.</li>
+    <li><b>Impact validation:</b> default browser associations confirmed unmodified; timeline analysis of the execution window across user profile, Program Files, and ProgramData showed only benign session activity.</li>
+    <li><b>Tooling built:</b> three reusable PowerShell scripts for the MSP's RMM pipeline — an interactive remediation script with confirmation gates, a fully silent SYSTEM-context variant (automatic user-hive load/unload for logged-off profiles, detached full-scan launch to avoid RMM timeouts, structured exit codes for automated alerting), and the standalone six-surface persistence sweep with report-only mode.</li>
+    <li><b>Hardening:</b> Defender PUA protection enabled on the endpoint with org-wide rollout recommended; precautionary password reset for the affected account; user guidance on bundled-software download sites. No Defender exclusion or alert suppression applied — the detection worked as intended.</li>
+  </ul>
+
+  <h2>6. Lessons Learned</h2>
+  <p><b>What worked:</b> Defender real-time protection contained the threat in seconds; signature-based detection left no ambiguity about the threat family; verifying against endpoint telemetry rather than the alert summary caught the executed-vs-blocked discrepancy early.</p>
+  <p><b>What didn't:</b> The SOC platform's alert mischaracterized execution status ("Blocked" vs. the endpoint's <code>DidThreatExecute: True</code>) and shipped one-size-fits-all remediation guidance calibrated to full network compromise — both would have misled a purely alert-driven response, in opposite directions. PUA protection was not enabled on the endpoint, which would likely have blocked the bundled installer before execution.</p>
+  <p><b>What changed as a result:</b> Endpoint-telemetry verification of execution status became a standing step in my Defender alert triage rather than a discretionary one; Defender PUA protection was enabled on the endpoint and recommended for org-wide RMM rollout; the three remediation scripts became reusable response tooling for future PUA/hijacker incidents across managed clients.</p>
+
+  <h2>7. MITRE ATT&amp;CK Mapping</h2>
+  <table class="attck">
+    <tr><th>Tactic</th><th>Technique</th><th>ID</th><th>Observed via</th></tr>
+    <tr><td>Execution</td><td>User Execution: Malicious File</td><td>T1204.002</td><td>explorer.exe parent process; user-downloaded bundled installer</td></tr>
+    <tr><td>Defense Evasion</td><td>Masquerading</td><td>T1036</td><td>Malware packaged as a legitimate "recipe/nutrition" utility</td></tr>
+    <tr><td>Defense Evasion / Impact</td><td>Modify Registry (attempted — browser hijack objective)</td><td>T1112</td><td>Threat family behavior; verified <em>not achieved</em> via URL association inspection</td></tr>
+    <tr><td>Persistence (hunted, negative)</td><td>Registry Run Keys / Startup Folder</td><td>T1547.001</td><td>Sweep of HKLM + all user hives, startup folders — clean</td></tr>
+    <tr><td>Persistence (hunted, negative)</td><td>Shortcut Modification</td><td>T1547.009</td><td>.lnk target resolution across startup locations — clean</td></tr>
+    <tr><td>Persistence (hunted, negative)</td><td>Scheduled Task</td><td>T1053.005</td><td>Full task inventory incl. AppData-sourced actions — clean</td></tr>
+    <tr><td>Persistence (hunted, negative)</td><td>Windows Service</td><td>T1543.003</td><td>Service image-path review — clean</td></tr>
+    <tr><td>Persistence (hunted, negative)</td><td>WMI Event Subscription</td><td>T1546.003</td><td>root\subscription consumer/binding enumeration — clean</td></tr>
+  </table>
+
+  <h2>8. Timeline (Sanitized)</h2>
+  <p class="hint">Relative timestamps (T+0) avoid dating the incident.</p>
+  <table class="timeline">
+    <tr><td>T+0s</td><td>User launches bundled installer; Defender real-time protection detects MediaArena payload executing</td></tr>
+    <tr><td>T+23s</td><td>Defender terminates process and quarantines payload; malware's only completed action was self-registering an uninstall key</td></tr>
+    <tr><td>T+4m</td><td>Managed SOC platform raises high-severity incident (execution status reported as "Blocked")</td></tr>
+    <tr><td>T+1h</td><td>Triage begins; endpoint telemetry validated; <code>DidThreatExecute: True</code> discrepancy identified and investigation re-scoped</td></tr>
+    <tr><td>T+2h</td><td>Registry cleanup independently verified (user hive confirmed loaded); persistence sweep executed — zero findings</td></tr>
+    <tr><td>T+3h</td><td>Impact forensics complete: browser associations unmodified, no artifacts outside payload directory; full scan clean</td></tr>
+    <tr><td>T+4h</td><td>Hardening applied (PUA protection), precautionary credential reset, incident closed with corrected disposition and full evidence log</td></tr>
+  </table>
+
+  </div>
+
+<footer class="wrap">
+  Author: Adedayo · <a href="https://o-adedayo.github.io">Portfolio</a> · <a href="https://github.com/o-adedayo">GitHub</a>
+</footer>
+</body>
+</html>
