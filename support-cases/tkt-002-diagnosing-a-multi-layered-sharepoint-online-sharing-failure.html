@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Diagnosing a Multi-Layered SharePoint Online Sharing Failure — Adedayo</title>
+<meta name="description" content="Sanitized IT support troubleshooting case study." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#0c1118; --panel:#121a25; --panel-2:#0f1620; --line:#22303f;
+    --text:#e8eef5; --muted:#90a2b6; --amber:#e9a23b; --amber-dim:rgba(233,162,59,.12);
+    --steel:#5b7a9d; --ok:#4caf7d; --crit:#e5484d;
+    --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',system-ui,sans-serif; --serif:'Spectral',Georgia,serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--ink);color:var(--text);font-family:var(--sans);line-height:1.7;font-size:16px}
+  a{color:var(--amber);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:760px;margin:0 auto;padding:0 24px}
+  header.top{border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(12,17,24,.92);backdrop-filter:blur(8px)}
+  .top-inner{display:flex;align-items:center;justify-content:space-between;height:56px}
+  .top-id{font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.06em}
+  .back{font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;color:var(--muted)}
+  .back:hover{color:var(--amber)}
+
+  .banner{
+    font-family:var(--mono);font-size:12.5px;color:var(--muted);
+    background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--amber);
+    border-radius:4px;padding:12px 16px;margin:36px 0 28px;
+  }
+  .banner b{color:var(--amber)}
+
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(26px,4vw,36px);line-height:1.25;margin-top:8px}
+  p.subtitle{font-family:var(--serif);font-style:italic;font-size:18px;color:var(--muted);margin-top:10px}
+
+  table.meta{width:100%;border-collapse:collapse;margin:26px 0;font-size:14px}
+  table.meta td{border:1px solid var(--line);padding:8px 12px}
+  table.meta td:first-child{color:var(--steel);font-family:var(--mono);font-size:12.5px;width:38%;background:var(--panel-2)}
+
+  h2{font-family:var(--sans);font-weight:600;font-size:19px;margin:40px 0 12px;padding-top:16px;border-top:1px solid var(--line)}
+  h2:first-of-type{border-top:none;padding-top:0}
+  h3{font-family:var(--sans);font-weight:600;font-size:16px;color:var(--amber);margin:26px 0 8px}
+  p{color:var(--text);margin-bottom:12px}
+  p.hint{color:var(--muted);font-style:italic;font-size:14.5px}
+
+  ol,ul{margin:10px 0 12px 20px;color:var(--text)}
+  li{margin-bottom:6px}
+
+  blockquote{
+    margin:14px 0 16px;padding:10px 16px;border-left:3px solid var(--steel);
+    background:var(--panel-2);border-radius:0 4px 4px 0;
+    font-style:italic;color:var(--muted);font-size:15px;
+  }
+
+  pre.code{
+    font-family:var(--mono);font-size:13px;line-height:1.6;color:#c7d3e0;
+    background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--amber);
+    border-radius:4px;padding:14px 16px;margin:14px 0 16px;overflow-x:auto;white-space:pre;
+  }
+  code{font-family:var(--mono);font-size:.92em;background:var(--panel-2);border:1px solid var(--line);border-radius:3px;padding:1px 6px;color:#c7d3e0}
+
+  table.steps{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+  table.steps th{
+    font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--steel);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);
+  }
+  table.steps td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--text)}
+  tr.rootcause td{background:var(--amber-dim)}
+  tr.rootcause td b{color:var(--amber)}
+
+  .tags{margin-top:8px}
+  .tag{
+    display:inline-block;font-family:var(--mono);font-size:12px;color:var(--amber);
+    background:var(--amber-dim);border-radius:3px;padding:3px 9px;margin:4px 6px 0 0;
+  }
+
+  .note{
+    margin-top:40px;background:var(--panel);border:1px solid var(--line);border-radius:6px;
+    padding:18px 20px;font-size:14.5px;color:var(--muted);
+  }
+  .note b{color:var(--text)}
+
+  footer{padding:48px 0 44px;font-family:var(--mono);font-size:12px;color:var(--steel)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="top-id"><b>ADEDAYO</b> · TECHNICAL CASE STUDY</div>
+    <a class="back" href="index.html">← ALL WRITE-UPS</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="banner">
+    <b>Sanitization notice:</b> Based on a real support case. User names, hostnames, and
+    organization-identifying details have been removed or generalized.
+  </div>
+
+  <h1>Diagnosing a Multi-Layered SharePoint Online Sharing Failure</h1>
+  
+  <table class="meta">
+    <tr><td>Ticket ID</td><td>TKT-002</td></tr>
+    <tr><td>Category</td><td>Identity &amp; Collaboration / Microsoft 365 — SharePoint Online</td></tr>
+    <tr><td>Priority</td><td>P2 — finance user blocked from sharing year-end documents</td></tr>
+    <tr><td>Environment</td><td>SharePoint Online, classic Document Center site, client M365 tenant, SPO Management Shell</td></tr>
+    <tr><td>Time to resolve</td><td>3 business days (multi-layer investigation across sessions)</td></tr>
+    <tr><td>Outcome</td><td>Resolved — root cause confirmed; content migration plan agreed with client</td></tr>
+  </table>
+
+  <h2>Executive Summary</h2>
+  <p>A finance user at a managed client was unable to share a critical year-end folder in SharePoint Online, receiving only the restricted "Ask owner to share" dialog. What initially presented as a routine permissions issue was resolved through a systematic, evidence-driven investigation that uncovered four independent, stacked causes — including one silent administrative failure and an obscure platform-level limitation that restricted sharing for every user in the organization, including Global Administrators.</p>
+  <p>The confirmed root cause: the site's document library contained <b>13,151 items — more than 2.6&times; the SharePoint Online list view threshold of 5,000</b> — which caused the platform to prohibit all permission-scope changes on the library. Because sharing an item with new recipients requires breaking permission inheritance, every sharing attempt was blocked regardless of the requester's privilege level. The finding was validated through controlled cross-site testing and resolved through content relocation, with a library restructuring plan agreed with the client to prevent recurrence.</p>
+
+  <h3>Case Highlights</h3>
+  <ul>
+    <li><b>Layered root cause:</b> four independent issues masked one another — sharing-link-only access, silently failed admin grants, folder-level broken inheritance, and the list view threshold block</li>
+    <li><b>Evidence over assumption:</b> every hypothesis was confirmed or eliminated with PowerShell output, admin center configuration, or a controlled behavioral test</li>
+    <li><b>Platform-depth knowledge:</b> identified a non-obvious interaction between the 5,000-item threshold and SharePoint's permission-scope architecture that produces misleading, permission-like symptoms</li>
+    <li><b>Verified resolution:</b> relocation test restored sharing immediately; remediation plan (new site, sub-threshold libraries) agreed with the client</li>
+  </ul>
+
+  <h2>Background and Problem Statement</h2>
+  <p>The client operates a legacy classic SharePoint site (Document Center template) holding financial records, alongside modern Microsoft 365 Group-connected sites. A finance user attempting to share the folder F2025-26 (Documents &rsaquo; Year End Documents) with an internal colleague received the dialog:</p>
+  <blockquote>"Sharing is limited on this item — you can only copy links for people who have existing access and you can't invite anyone new."</blockquote>
+  <p>The issue persisted after the user was reportedly granted site ownership and after more than 12 hours of propagation time — signalling that the visible symptom did not match the assumed cause and warranting a structured investigation.</p>
+
+  <h2>Investigation Methodology</h2>
+  <p>The investigation followed a hypothesis-elimination approach: identify every layer capable of producing the symptom, then confirm or eliminate each with direct evidence rather than assumption. Layers examined, in order: user identity and effective permissions → site ownership → site and tenant sharing policy → compliance controls (sensitivity labels, DLP, IRM, retention, Restricted Access Control) → library and item architecture.</p>
+
+  <h3>Phase 1 — Establishing Ground Truth on Permissions</h3>
+  <p>Rather than trusting the reported ownership change, effective permissions were verified directly via the SharePoint Online Management Shell:</p>
+  <pre class="code">Get-SPOUser -Site https://&lt;tenant&gt;.sharepoint.com/sites/&lt;FinanceSite&gt; `
+  -LoginName &lt;user&gt; | Format-List DisplayName, Groups, IsSiteAdmin</pre>
+  <p>Result: the user held <b>no actual site permissions</b> — only "Limited Access" system groups and a SharingLinks.…OrganizationEdit entry. Her access existed solely through an organization-wide sharing link, and IsSiteAdmin returned False. The reported ownership grant had never applied.</p>
+
+  <h3>Phase 2 — Exposing a Silent Administrative Failure</h3>
+  <p>Attempts to grant site collection admin rights via Set-SPOUser completed without error yet produced no change — a silent failure. A subsequent Remove-SPOUser call surfaced the real problem explicitly: "Attempted to perform an unauthorized operation." The connected admin session lacked SharePoint Administrator rights on the tenant. Reconnecting with the client's Global Administrator account allowed the grants to apply, verified this time rather than assumed:</p>
+  <pre class="code">(Get-SPOUser -Site &lt;siteUrl&gt; -LoginName &lt;user&gt;).IsSiteAdmin   # True
+(Get-SPOUser -Site &lt;siteUrl&gt; -LoginName &lt;GA account&gt;).IsSiteAdmin   # True</pre>
+  <p>Key discipline demonstrated: every permission change in this case was independently verified after execution — a practice that exposed two separate "completed" changes that had not actually taken effect.</p>
+
+  <h3>Phase 3 — The Pivotal Control Test</h3>
+  <p>With both the user and the Global Administrator confirmed as site collection administrators, the restricted sharing dialog <b>still appeared for both accounts</b>. This single result eliminated the entire permission layer as the root cause: if the highest possible privilege level is equally affected, the restriction must originate above permissions — in policy, compliance, or platform architecture.</p>
+
+  <h3>Phase 4 — Systematic Elimination of Policy and Compliance Layers</h3>
+  <pre class="code">Get-SPOSite -Identity &lt;siteUrl&gt; | Select SharingCapability,
+  DisableSharingForNonOwnersStatus, SensitivityLabel,
+  RestrictedAccessControl, RestrictedAccessControlGroups, BlockDownloadPolicy</pre>
+  <ul>
+    <li>SharingCapability: ExternalUserAndGuestSharing — sharing policy fully open (and the recipient was internal, making external policy irrelevant regardless)</li>
+    <li>SensitivityLabel: none at site level; file-level labels and DLP queued as candidates</li>
+    <li>RestrictedAccessControl: False, no RAC groups; BlockDownloadPolicy: False</li>
+    <li>Information Rights Management: link absent from library settings — IRM not enabled in the tenant</li>
+    <li>Information Management Policy Settings: retention policy "None" on all content types</li>
+  </ul>
+  <p>A comparative behavioral test added a decisive data point: the same user could share normally on a modern Group-connected site in the same tenant — isolating the problem to something specific to the finance site or its content, not the tenant, the account, or global policy.</p>
+
+  <h3>Phase 5 — Root Cause Identification</h3>
+  <p>While ruling out IRM in the library's classic settings page, a critical detail surfaced in the List Information banner:</p>
+  <blockquote>"13151 items (list view threshold is 5000). Tasks that cause excessive server load (such as those involving all list items) are currently prohibited."</blockquote>
+  <p>This reframed the entire case. In SharePoint Online, sharing an item with new recipients requires <b>breaking permission inheritance</b> to create a unique permission scope — an operation the platform prohibits on libraries exceeding the 5,000-item threshold. The only sharing actions that remain available are links for people with existing access — which is, verbatim, the dialog every user had been receiving. The threshold explained every anomaly at once: why site collection admins were equally affected, why a wide-open sharing policy didn't help, and why the healthy modern site behaved normally.</p>
+
+  <h3>Phase 6 — Confirmation and the Final Layer</h3>
+  <p>Two closing tests hardened the conclusion. First, adding the intended recipient to the site Members group still did not grant folder access — revealing that F2025-26 carried pre-existing unique permissions (broken inheritance), whose ACL could not be modified precisely because of the threshold block. Second, when the folder was moved to a healthy library on another site, sharing with the same recipient worked immediately. Cause confirmed by both negative and positive controls.</p>
+
+  <h2>Findings Matrix</h2>
+  <table class="steps">
+    <tr><th>Hypothesis Tested</th><th>Evidence Gathered</th><th>Result</th></tr>
+    <tr>
+      <td><b>User permissions insufficient</b></td>
+      <td>Get-SPOUser: only Limited Access system groups + OrganizationEdit sharing link; IsSiteAdmin = False</td>
+      <td>Contributing factor — user had no real site permissions; access via sharing link only</td>
+    </tr>
+    <tr>
+      <td><b>Ownership grant applied correctly</b></td>
+      <td>Set-SPOUser executed without visible error, but IsSiteAdmin remained False; Remove-SPOUser surfaced "unauthorized operation"</td>
+      <td>Silent failure exposed — executing account lacked SharePoint Administrator rights</td>
+    </tr>
+    <tr>
+      <td><b>Tenant / site sharing policy</b></td>
+      <td>Get-SPOSite: SharingCapability = ExternalUserAndGuestSharing; recipient internal</td>
+      <td>Ruled out — configuration fully open</td>
+    </tr>
+    <tr>
+      <td><b>Compliance controls (labels, RAC, IRM, retention)</b></td>
+      <td>SensitivityLabel blank; RestrictedAccessControl = False; no IRM link on library settings; all content type retention policies = None</td>
+      <td>Ruled out at every layer</td>
+    </tr>
+    <tr>
+      <td><b>Permissions as full root cause</b></td>
+      <td>Both user and Global Admin verified as site collection admins (IsSiteAdmin = True); restricted dialog persisted for both</td>
+      <td>Ruled out — restriction affected admins equally, so cause sat above the permission layer</td>
+    </tr>
+    <tr class="rootcause">
+      <td><b>List view threshold</b></td>
+      <td>Library settings banner: 13,151 items vs. 5,000 threshold; "tasks causing excessive server load are currently prohibited"</td>
+      <td><b>ROOT CAUSE — permission-scope changes blocked library-wide</b></td>
+    </tr>
+    <tr>
+      <td><b>Folder-level inheritance</b></td>
+      <td>Recipient added to site Members group still could not access folder; folder shared normally after relocation to healthy site</td>
+      <td>Confirmed — folder carried pre-existing unique permissions unreachable through group membership</td>
+    </tr>
+  </table>
+
+  <h2>Root Cause Analysis</h2>
+  <p>Final root-cause chain, in the order the layers stacked:</p>
+  <ul>
+    <li><b>Masking layer:</b> the user's only access came from an organization-wide edit link — producing permission-like symptoms that concealed the deeper cause during early triage</li>
+    <li><b>Process failure:</b> initial ownership grants failed silently because the executing admin session lacked SharePoint Administrator rights — detected only through post-change verification</li>
+    <li><b>Primary root cause:</b> the Documents library exceeded the list view threshold (13,151 vs. 5,000 items), causing SharePoint Online to prohibit permission-scope changes library-wide — blocking all new sharing grants for all users, including site collection administrators</li>
+    <li><b>Compounding factor:</b> the target folder had pre-existing unique permissions, so even site-level group grants could not reach it, and its ACL was frozen by the threshold block</li>
+  </ul>
+
+  <h2>Resolution and Remediation</h2>
+  <ul>
+    <li>Immediate: folder relocated to a healthy, sub-threshold library — normal sharing restored and verified with the actual intended recipient</li>
+    <li>Agreed with client: provision a new "Finance Documents 2.0" site; migrate content in stages with sharing validation at each step, keeping individual libraries below ≈ 5,000 items (segmented by fiscal year)</li>
+    <li>Post-migration integrity: audit links, synced folders, shortcuts, and Power Automate flows referencing the legacy paths after each move</li>
+    <li>Security review: verify membership and permissions on any site receiving year-end financial content, ensuring relocation does not widen the audience for sensitive records</li>
+    <li>Preventive guidance: retire the legacy Document Center pattern of single monolithic libraries — the same threshold degrades views, sync, and sharing and would continue generating incidents</li>
+  </ul>
+
+  <h2>Skills Demonstrated</h2>
+  <h3>Technical</h3>
+  <ul>
+    <li>SharePoint Online administration: classic vs. modern site architecture, permission inheritance and scopes, sharing-link mechanics, site collection administration, list view threshold behavior</li>
+    <li>PowerShell forensics: SharePoint Online Management Shell (Get/Set/Remove-SPOUser, Get-SPOSite, Get-SPOSiteGroup), interpreting claims identities, Limited Access system groups, and SharingLinks principals</li>
+    <li>Microsoft 365 security &amp; compliance assessment: sensitivity labels, DLP, IRM, Restricted Access Control, retention policies — evaluated and eliminated methodically</li>
+    <li>Environment troubleshooting: resolved a OneDrive folder-redirection module installation failure mid-investigation without derailing the engagement</li>
+  </ul>
+  <h3>Investigative</h3>
+  <ul>
+    <li>Hypothesis-driven elimination across five architectural layers, with each conclusion anchored to captured evidence</li>
+    <li>Control testing: privileged-account comparison (Global Admin), cross-site comparison, and within-site scoping tests to isolate the fault domain</li>
+    <li>Verification discipline: never accepting a "completed" change without independent confirmation — the practice that exposed two silent failures</li>
+    <li>Resistance to premature closure: continued investigating after the "obvious" fix (ownership) was applied and symptoms persisted</li>
+  </ul>
+  <h3>Professional</h3>
+  <ul>
+    <li>Clear client communication throughout a multi-day, multi-layer investigation, including negotiating a pragmatic remediation plan</li>
+    <li>Security-first judgment: flagged that relocating financial records changes their exposure surface and requires a permission review — beyond the literal scope of the ticket</li>
+    <li>Complete documentation: ticket notes, root-cause chain, and forward-looking recommendations delivered as part of closure</li>
+  </ul>
+
+  <h2>Key Takeaways</h2>
+  <ul>
+    <li><b>Symptoms lie about layers.</b> A permission-style error dialog was ultimately caused by a scalability limit. The dialog text ("existing access only") was a precise clue — it described exactly what the platform could still do.</li>
+    <li><b>Verify every change.</b> Two administrative changes in this case reported success and did nothing. Post-change verification is not optional in tenant administration.</li>
+    <li><b>Privileged control tests are the fastest layer-eliminator.</b> The moment a Global Administrator reproduced the issue, hundreds of permission-related dead ends disappeared from the search space.</li>
+    <li><b>Legacy architecture is a root cause in waiting.</b> A 13,000-item classic library functioned for years until an ordinary business request collided with a platform limit. Proactive restructuring is cheaper than the incidents it prevents.</li>
+  </ul>
+
+  <div class="note">
+    <b>Security note:</b> No malicious activity involved — but the resolution carried a genuine security
+    dimension: relocating year-end financial records changes their exposure surface. A membership and
+    permission review of the destination site was flagged as a required closure step, ensuring the
+    sharing fix did not quietly broaden access to sensitive financial data.
+  </div>
+
+</div>
+
+<footer class="wrap">
+  Author: Adedayo · <a href="https://o-adedayo.github.io">Portfolio</a> · <a href="https://github.com/o-adedayo">GitHub</a>
+</footer>
+</body>
+</html>
