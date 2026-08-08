@@ -38,4 +38,4 @@ and served via GitHub Pages from the `main` branch.
 
 ## Contact
 
-[GitHub](https://github.com/o-adedayo) · [LinkedIn](https://www.linkedin.com/in/adedayoogungbemi/) · [Email](ogungbemiadedayo@gmail.com)
+[GitHub](https://github.com/o-adedayo) · [LinkedIn](https://www.linkedin.com/in/adedayoogungbemi/) · [Email](mailto:ogungbemiadedayo@gmail.com)
