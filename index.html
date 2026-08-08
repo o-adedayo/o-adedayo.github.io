@@ -282,15 +282,15 @@
             <span>CASE-002</span>
             <span class="chip warn">SEV-3</span>
           </div>
-          <h3>Malware Triage: Living-off-the-Land Persistence on <span class="redact">██████</span></h3>
-          <p>Endpoint alert traced to scheduled-task persistence using native Windows binaries.
-             Walkthrough of the triage decision tree and the Sysmon telemetry that confirmed scope.</p>
+          <h3>CASE-02 — Shadow Copy Deletion on a Production SQL Server: Deconflicting a Ransomware Precursor (T1490) <span class="redact">██████</span></h3>
+          <p>Our third-party managed SOC called to escalate a high-severity EDR detection: 
+            all volume shadow copies had just been deleted on a client's production SQL server using vssadmin.exe</p>
           <div class="case-fields">
             <span class="k">DETECTED VIA</span><span class="v">EDR behavioral alert</span>
             <span class="k">OUTCOME</span><span class="v">Contained, single host</span>
-            <span class="k">ATT&amp;CK</span><span class="v"><span class="ttp">T1053.005</span><span class="ttp">T1059.001</span></span>
+            <span class="k">ATT&amp;CK</span><span class="v"><span class="ttp">T1490</span></span>
           </div>
-          <a class="case-link" href="#">READ FULL REPORT →</a>
+          <a class="case-link" href="https://o-adedayo.github.io/case-studies/case-02-shadow-copy-deletion-on-a-production-sql-server.html">READ FULL REPORT →</a>
         </article>
 
         <article class="case">
