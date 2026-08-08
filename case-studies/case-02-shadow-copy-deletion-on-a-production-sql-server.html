@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CASE-02 — Shadow Copy Deletion on a Production SQL Server (T1490 Deconfliction) — Adedayo</title>
+<meta name="description" content="Sanitized incident response case study." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink:#0c1118; --panel:#121a25; --panel-2:#0f1620; --line:#22303f;
+    --text:#e8eef5; --muted:#90a2b6; --amber:#e9a23b; --amber-dim:rgba(233,162,59,.12);
+    --steel:#5b7a9d; --ok:#4caf7d; --crit:#e5484d;
+    --mono:'IBM Plex Mono',ui-monospace,monospace; --sans:'IBM Plex Sans',system-ui,sans-serif; --serif:'Spectral',Georgia,serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--ink);color:var(--text);font-family:var(--sans);line-height:1.7;font-size:16px}
+  a{color:var(--amber);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:780px;margin:0 auto;padding:0 24px}
+  header.top{border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(12,17,24,.92);backdrop-filter:blur(8px)}
+  .top-inner{display:flex;align-items:center;justify-content:space-between;height:56px}
+  .top-id{font-family:var(--mono);font-size:13px;color:var(--muted);letter-spacing:.06em}
+  .back{font-family:var(--mono);font-size:12.5px;letter-spacing:.06em;color:var(--muted)}
+  .back:hover{color:var(--amber)}
+
+  .banner{
+    font-family:var(--mono);font-size:12.5px;color:var(--muted);
+    background:var(--panel-2);border:1px solid var(--line);border-left:3px solid var(--amber);
+    border-radius:4px;padding:12px 16px;margin:36px 0 28px;
+  }
+  .banner b{color:var(--amber)}
+
+  .chip{display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;border-radius:3px;padding:2px 9px}
+  .chip.crit{color:var(--crit);border:1px solid rgba(229,72,77,.45);background:rgba(229,72,77,.08)}
+
+  h1{font-family:var(--serif);font-weight:500;font-size:clamp(26px,4vw,36px);line-height:1.25;margin-top:14px}
+
+  table.meta{width:100%;border-collapse:collapse;margin:26px 0;font-size:14px}
+  table.meta td{border:1px solid var(--line);padding:8px 12px}
+  table.meta td:first-child{color:var(--steel);font-family:var(--mono);font-size:12.5px;width:38%;background:var(--panel-2)}
+
+  h2{font-family:var(--sans);font-weight:600;font-size:19px;margin:40px 0 12px;padding-top:16px;border-top:1px solid var(--line)}
+  h2:first-of-type{border-top:none;padding-top:0}
+  p{color:var(--text);margin-bottom:4px}
+  p.hint{color:var(--muted);font-style:italic;font-size:14.5px}
+
+  ul,ol{margin:10px 0 0 20px;color:var(--text)}
+  li{margin-bottom:6px}
+
+  table.findings, table.timeline, table.attck{width:100%;border-collapse:collapse;margin-top:14px;font-size:13.5px}
+  table.findings th, table.timeline th, table.attck th{
+    font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--steel);text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);
+  }
+  table.findings td, table.timeline td, table.attck td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--text)}
+  code{font-family:var(--mono);font-size:.92em;background:var(--panel-2);border:1px solid var(--line);border-radius:3px;padding:1px 6px;color:#c7d3e0}
+
+  .ttp{display:inline-block;font-family:var(--mono);font-size:12px;color:var(--amber);background:var(--amber-dim);border-radius:3px;padding:3px 9px;margin:4px 6px 0 0}
+
+  .checklist{margin-top:14px;list-style:none;margin-left:0}
+  .checklist li{
+    font-family:var(--mono);font-size:13px;color:var(--muted);padding:6px 0 6px 26px;position:relative;border-bottom:1px solid var(--line);
+  }
+  .checklist li::before{content:"☑";position:absolute;left:0;color:var(--ok)}
+
+  footer{padding:48px 0 44px;font-family:var(--mono);font-size:12px;color:var(--steel)}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="top-id"><b>ADEDAYO</b> · IR CASE STUDY</div>
+    <a class="back" href="index.html">← ALL CASE STUDIES</a>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="banner">
+    <b>Sanitization notice:</b> This report is based on a real incident I handled.
+    Organization names, hostnames, usernames, IP addresses, and any identifying indicators
+    have been removed or generalized. The analysis, decisions, and timeline are unaltered.
+  </div>
+
+  <span class="chip crit">SEV-2</span>
+  <h1>CASE-02 — Shadow Copy Deletion on a Production SQL Server: Deconflicting a Ransomware Precursor (T1490)</h1>
+
+  <table class="meta">
+    <tr><td>Case ID</td><td>CASE-02</td></tr>
+    <tr><td>Severity</td><td>SEV-2 (High) — ransomware-precursor technique on a production database server, pending deconfliction</td></tr>
+    <tr><td>Status</td><td>Closed — benign true positive (authorized administrative activity)</td></tr>
+    <tr><td>Incident type</td><td>Suspected ransomware precursor / inhibit system recovery</td></tr>
+    <tr><td>Detection source</td><td>Datto EDR behavioral rule → escalated by third-party managed SOC (RocketCyber) via phone</td></tr>
+    <tr><td>Dwell time</td><td>~2 minutes from execution to alert (real-time rule detection)</td></tr>
+    <tr><td>Time to contain</td><td>N/A — deconflicted as authorized within hours; containment held in reserve, never required</td></tr>
+    <tr><td>ATT&amp;CK techniques</td><td>T1490 (Impact — Inhibit System Recovery)</td></tr>
+    <tr><td>Role in response</td><td>Lead triage analyst (MSP side); coordinated with third-party SOC and client IT administration</td></tr>
+  </table>
+
+  <h2>1. Executive Summary</h2>
+  <p>Our third-party managed SOC called to escalate a high-severity EDR detection: all volume shadow copies had just been deleted on a client's production SQL server using <code>vssadmin.exe</code> — the single most common command ransomware operators run immediately before encryption. I led triage on the MSP side, assessed the telemetry as consistent with hands-on administrative activity rather than automated malware, and ran a verification-first deconfliction: a direct phone call to the client's IT administrator, backed by written email confirmation. The administrator confirmed he had deleted the shadow copies himself while troubleshooting a failing backup product. The alert was closed as a benign true positive, and a request from the client to "pause protection" during his maintenance was converted into a narrowly scoped, time-boxed alert suppression instead — keeping the server fully protected throughout. No compromise, no impact, and the detection pipeline was validated end to end.</p>
+
+  <h2>2. Detection</h2>
+  <ul>
+    <li>A Datto EDR behavioral rule fired on execution of <code>vssadmin.exe delete shadows /all /quiet</code> on a production SQL server, mapped to ATT&amp;CK T1490 (Inhibit System Recovery) at High severity.</li>
+    <li>The signal identified the executing account as a named domain administrator, with a process lineage of <code>explorer.exe → powershell.exe → vssadmin.exe</code> and a plain, unobfuscated command line.</li>
+    <li>The managed SOC escalated by phone rather than ticket — appropriate for this alert class, because in genuine intrusions shadow copy deletion precedes encryption by minutes, and a compromised domain admin on a database server represents maximum blast radius.</li>
+  </ul>
+  <p style="margin-top:12px"><b>Telemetry involved:</b> Datto EDR process telemetry (command line, process lineage, file signature metadata, binary reputation), RocketCyber managed SOC incident record.</p>
+
+  <h2>3. Triage &amp; Scoping</h2>
+  <p>The core analytical problem: <code>vssadmin.exe</code> is a Microsoft-signed, entirely legitimate administration utility (a LOLBin). The binary's reputation is meaningless — a 0-detection VirusTotal score is expected. Disposition rests entirely on context: who ran it, how, and what surrounded it. Two hypotheses fit the same telemetry: (a) an administrator doing routine VSS maintenance, common on SQL servers where shadow storage grows aggressively, or (b) a hands-on-keyboard intruder operating a stolen admin account in the pre-encryption phase of a ransomware operation — who would type exactly the same command.</p>
+  <p style="margin-top:10px">Before any contact, I scoped the telemetry to weight the hypotheses:</p>
+
+  <table class="findings">
+    <tr><th>#</th><th>Finding</th><th>Evidence source</th></tr>
+    <tr><td>1</td><td>Process lineage (<code>explorer.exe → powershell.exe → vssadmin.exe</code>) indicated an interactive desktop session — a human at a shell, not a payload, service host, or scheduled task spawning the deletion</td><td>EDR process tree</td></tr>
+    <tr><td>2</td><td>Command line was plain and unobfuscated — no encoding, no download cradle, no defense-evasion wrapping typical of automated tooling</td><td>EDR command-line capture</td></tr>
+    <tr><td>3</td><td>Executing account was a named client IT administrator account, providing a direct human deconfliction path — while simultaneously being the account an intruder would most want</td><td>EDR event metadata</td></tr>
+    <tr><td>4</td><td>No ransomware precursor constellation: no backup catalog deletion (<code>wbadmin</code>), no boot config tampering (<code>bcdedit</code>), no event log clearing, no mass file modification, no anomalous persistence in the surrounding window</td><td>EDR alert review for the host and account</td></tr>
+    <tr><td>5</td><td>Binary was the genuine Microsoft-signed system utility in its expected path (catalog-signed, clean reputation) — ruling out masquerading, not intent</td><td>Signature metadata / hash reputation</td></tr>
+  </table>
+
+  <p style="margin-top:12px">Working assessment: probable authorized maintenance — but indistinguishable from a compromised-account scenario on telemetry alone. Severity held at SEV-2 and the EDR-recommended containment path (host isolation + account disablement) was staged, pending human deconfliction.</p>
+
+  <h2>4. Containment</h2>
+  <p>Containment was deliberately <b>held in reserve rather than executed pre-emptively.</b> Isolating a production SQL server and disabling the client's primary IT admin account carries real operational damage; with telemetry leaning benign and a fast deconfliction path available, verification-first was the proportionate call — with isolation ready to trigger immediately if contact failed or the story didn't corroborate.</p>
+  <p style="margin-top:10px">The deconfliction itself was designed to be resistant to the alternative hypothesis:</p>
+  <ul>
+    <li><b>Phone first, not email.</b> If the competing explanation is a compromised admin account, the attacker may also control that account's mailbox. Voice contact with the known individual defeats that. The administrator confirmed verbally that he executed the command.</li>
+    <li><b>Written confirmation second,</b> to create a documented evidence trail: he was troubleshooting a failing backup product and reset the server's shadow copies as part of remediation.</li>
+    <li><b>Story corroborated against telemetry.</b> Backup troubleshooting on a SQL server is consistent with every observed artifact — interactive session, plain syntax, admin account, no precursor activity.</li>
+  </ul>
+  <p style="margin-top:10px">During the call, the administrator asked for endpoint protection to be <i>paused</i> for a few hours while he finished the work. I declined the pause and instead applied a <b>time-boxed suppression scoped to the single detection rule on the single host.</b> He got a quiet maintenance window; the server kept full EDR coverage for everything else. Pausing protection on a production database server — precisely the asset and moment an intruder would choose — was not an acceptable trade for alert convenience.</p>
+
+  <h2>5. Remediation &amp; Recovery</h2>
+  <ul>
+    <li>Alert closed as a benign true positive with the verification method fully documented (named individual, voice + written confirmation, timestamps).</li>
+    <li>Deconfliction outcome reported back to the managed SOC, closing the escalation loop and preventing duplicate escalations for the same maintenance activity.</li>
+    <li>Suppression removal scheduled for the end of the maintenance window — no permanent suppression of a T1490 rule was permitted on a production server.</li>
+    <li>Post-maintenance validation planned: confirm shadow copies are regenerating (<code>vssadmin list shadows</code>), which simultaneously verifies the client's restore points are healthy and the detection surface is fully re-armed, and confirm the underlying backup product issue is resolved.</li>
+  </ul>
+
+  <h2>6. Lessons Learned</h2>
+  <p><b>What worked:</b> Real-time rule detection put the alert in front of a human roughly two minutes after execution. Phone escalation from the SOC matched the urgency of the technique. Telemetry-first triage produced a calibrated hypothesis before any contact was made, and voice-first deconfliction closed the case with evidence that would survive scrutiny either way.</p>
+  <p><b>What didn't:</b> There was no pre-agreed change-notification channel for the client's internal IT to flag planned maintenance involving security-sensitive operations — this entire escalation was avoidable with a one-line heads-up. The client's instinct to request a full protection pause also revealed a gap in shared understanding of what EDR suppression can do.</p>
+  <p><b>What changed as a result:</b> Proposed a lightweight maintenance pre-notification practice for client IT admins performing operations that intersect known detection rules (VSS operations, backup catalog changes, boot configuration). Standardized the internal playbook response to "pause protection" requests: scoped, time-boxed rule suppression with a mandatory removal task — never agent pause.</p>
+
+  <h2>7. MITRE ATT&amp;CK Mapping</h2>
+  <table class="attck">
+    <tr><th>Tactic</th><th>Technique</th><th>ID</th><th>Observed via</th></tr>
+    <tr><td>Impact</td><td>Inhibit System Recovery</td><td>T1490</td><td>EDR rule on <code>vssadmin.exe delete shadows /all /quiet</code>; process lineage and account context captured in event telemetry</td></tr>
+  </table>
+  <p style="margin-top:12px"><span class="ttp">T1490 — Inhibit System Recovery</span></p>
+  <p class="hint" style="margin-top:8px">Only one technique was observed — and confirming that it stood alone (no accompanying discovery, persistence, or defense-evasion activity) was itself the key analytical finding supporting the benign disposition.</p>
+
+  <h2>8. Timeline (Sanitized)</h2>
+  <p class="hint">Relative timestamps (T+0) to avoid dating the incident.</p>
+  <table class="timeline">
+    <tr><th>Time</th><th>Event</th></tr>
+    <tr><td>T+0m</td><td><code>vssadmin.exe delete shadows /all /quiet</code> executed on the production SQL server (SQL-01, 192.0.2.33) under a client IT administrator account, from an interactive PowerShell session</td></tr>
+    <tr><td>T+2m</td><td>Datto EDR "Shadow Copy Deletion" rule fires (T1490, High); managed SOC incident auto-created</td></tr>
+    <tr><td>T+~10m</td><td>Managed SOC escalates by phone; alert details reviewed together; deconfliction ownership assigned to MSP</td></tr>
+    <tr><td>T+~30m</td><td>Telemetry triage complete; working hypothesis formed (probable authorized maintenance, compromise not excluded); containment staged but held</td></tr>
+    <tr><td>T+~1h</td><td>Phone contact with client IT administrator; verbal confirmation of authorized activity</td></tr>
+    <tr><td>T+~2h</td><td>Written email confirmation received; root cause identified as backup software troubleshooting. Client's "pause protection" request converted to a scoped, time-boxed single-rule suppression on the single host</td></tr>
+    <tr><td>T+~2h</td><td>SOC notified of benign disposition; escalation loop closed; alert resolved with full documentation</td></tr>
+    <tr><td>T+1d</td><td>Suppression removed after maintenance window; shadow copy regeneration and backup remediation verified</td></tr>
+  </table>
+
+  <h2>Appendix A — Sanitization Checklist</h2>
+  <p class="hint">Confirmed before publishing.</p>
+  <ul class="checklist">
+    <li>Organization name, industry-identifying details, and internal team names removed</li>
+    <li>Hostnames and internal naming conventions generalized (SQL-01)</li>
+    <li>Usernames/emails replaced with role labels (client IT administrator)</li>
+    <li>Real IPs replaced with RFC 5737 ranges (192.0.2.33)</li>
+    <li>Real file hashes removed (only the stock Microsoft-signed system binary was involved)</li>
+    <li>Proprietary detection content paraphrased, not pasted</li>
+    <li>Absolute dates replaced with relative timestamps</li>
+    <li>No screenshots included in this case study</li>
+    <li>Reviewed against employer confidentiality/NDA obligations</li>
+  </ul>
+
+</div>
+
+<footer class="wrap">
+  Author: Adedayo · <a href="https://o-adedayo.github.io">Portfolio</a> · <a href="https://github.com/o-adedayo">GitHub</a>
+</footer>
+</body>
+</html>
