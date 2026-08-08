@@ -123,7 +123,7 @@
   </ul>
 
   <h2>Background and Problem Statement</h2>
-  <p>The client operates a legacy classic SharePoint site (Document Center template) holding financial records, alongside modern Microsoft 365 Group-connected sites. A finance user attempting to share the folder F2025-26 (Documents &rsaquo; Year End Documents) with an internal colleague received the dialog:</p>
+  <p>The client operates a legacy classic SharePoint site (Document Center template) holding year-end records, alongside modern Microsoft 365 Group-connected sites. A user attempting to share the folder F2024 (Documents &rsaquo; Year End Documents) with an external client received the dialog:</p>
   <blockquote>"Sharing is limited on this item — you can only copy links for people who have existing access and you can't invite anyone new."</blockquote>
   <p>The issue persisted after the user was reportedly granted site ownership and after more than 12 hours of propagation time — signalling that the visible symptom did not match the assumed cause and warranting a structured investigation.</p>
 
@@ -164,7 +164,7 @@
   <p>This reframed the entire case. In SharePoint Online, sharing an item with new recipients requires <b>breaking permission inheritance</b> to create a unique permission scope — an operation the platform prohibits on libraries exceeding the 5,000-item threshold. The only sharing actions that remain available are links for people with existing access — which is, verbatim, the dialog every user had been receiving. The threshold explained every anomaly at once: why site collection admins were equally affected, why a wide-open sharing policy didn't help, and why the healthy modern site behaved normally.</p>
 
   <h3>Phase 6 — Confirmation and the Final Layer</h3>
-  <p>Two closing tests hardened the conclusion. First, adding the intended recipient to the site Members group still did not grant folder access — revealing that F2025-26 carried pre-existing unique permissions (broken inheritance), whose ACL could not be modified precisely because of the threshold block. Second, when the folder was moved to a healthy library on another site, sharing with the same recipient worked immediately. Cause confirmed by both negative and positive controls.</p>
+  <p>Two closing tests hardened the conclusion. First, adding the intended recipient to the site Members group still did not grant folder access — revealing that F2024 carried pre-existing unique permissions (broken inheritance), whose ACL could not be modified precisely because of the threshold block. Second, when the folder was moved to a healthy library on another site, sharing with the same recipient worked immediately. Cause confirmed by both negative and positive controls.</p>
 
   <h2>Findings Matrix</h2>
   <table class="steps">
@@ -218,7 +218,7 @@
   <h2>Resolution and Remediation</h2>
   <ul>
     <li>Immediate: folder relocated to a healthy, sub-threshold library — normal sharing restored and verified with the actual intended recipient</li>
-    <li>Agreed with client: provision a new "Finance Documents 2.0" site; migrate content in stages with sharing validation at each step, keeping individual libraries below ≈ 5,000 items (segmented by fiscal year)</li>
+    <li>Agreed with client: provision a new "[name] Documents 2.0" site; migrate content in stages with sharing validation at each step, keeping individual libraries below ≈ 5,000 items (segmented by fiscal year)</li>
     <li>Post-migration integrity: audit links, synced folders, shortcuts, and Power Automate flows referencing the legacy paths after each move</li>
     <li>Security review: verify membership and permissions on any site receiving year-end financial content, ensuring relocation does not widen the audience for sensitive records</li>
     <li>Preventive guidance: retire the legacy Document Center pattern of single monolithic libraries — the same threshold degrades views, sync, and sharing and would continue generating incidents</li>
