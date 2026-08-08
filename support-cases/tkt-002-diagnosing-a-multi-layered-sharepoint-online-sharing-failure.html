@@ -111,9 +111,7 @@
     <tr><td>Time to resolve</td><td>3 business days (multi-layer investigation across sessions)</td></tr>
     <tr><td>Outcome</td><td>Resolved — root cause confirmed; content migration plan agreed with client</td></tr>
   </table>
-
-  <h2>Executive Summary</h2>
-  <p>A finance user at a managed client was unable to share a critical year-end folder in SharePoint Online, receiving only the restricted "Ask owner to share" dialog. What initially presented as a routine permissions issue was resolved through a systematic, evidence-driven investigation that uncovered four independent, stacked causes — including one silent administrative failure and an obscure platform-level limitation that restricted sharing for every user in the organization, including Global Administrators.</p>
+  
   <p>The confirmed root cause: the site's document library contained <b>13,151 items — more than 2.6&times; the SharePoint Online list view threshold of 5,000</b> — which caused the platform to prohibit all permission-scope changes on the library. Because sharing an item with new recipients requires breaking permission inheritance, every sharing attempt was blocked regardless of the requester's privilege level. The finding was validated through controlled cross-site testing and resolved through content relocation, with a library restructuring plan agreed with the client to prevent recurrence.</p>
 
   <h3>Case Highlights</h3>
